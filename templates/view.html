@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Login{% endblock%}
+{% block main %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <p>{{msg}}</p>
+            {% endfor %}
+        {% endif%}
+    {% endwith %}
+    {% for i in values %}
+        <p>Name: {{i.name}}, email: {{i.email}}</p>
+    {% endfor %}
+    <!-- Make a delete button to delete all users from db-->
+    <form action="view" method="post">
+        <input type="submit" name="delete" value="delete all"/>
+    </form>    
+{% endblock %}
