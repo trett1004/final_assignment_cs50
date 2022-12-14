@@ -1,5 +1,4 @@
 import os
-import random
 
 from flask import Flask, redirect, url_for, render_template, request, session, flash
 from datetime import timedelta, date, datetime
@@ -7,65 +6,71 @@ import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_session import Session
 
-#from cs50 import SQL
-
 from helpers import apology, login_required
 
 # create the app
 app = Flask(__name__)
 
+# Session/Cookie configurations
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Ensure templates are auto-reloaded
-#app.config["TEMPLATES_AUTO_RELOAD"] = True
+# app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 app.secret_key = "KoyKoyKoy"
-
 
 # Establish connection to database
 con = sqlite3.connect("koy.db", check_same_thread=False)
 db = con.cursor()
 
-# Create a function that returns all grocery entries from database
+# Create a function that returns all grocery-entries from database
 def get_db():
     db.execute("select name from groceries")
     all_data = db.fetchall()
     all_data = [str(val[0]) for val in all_data]
 
-    # make a second list that is restricted to the first db entry
+    # make a copy of the list which contains only the first database entry
     shopping_list = all_data.copy() 
     shopping_list = shopping_list[0:1]
 
     return all_data, shopping_list
 
-# In the index route it is possible to add and remove items. The further routes "/add_items" and "/remove_items" return index.html
+# In the index route it is possible to add and remove items. The further routes (see routes below) "/add_items" and "/remove_items" return index.html
 @app.route("/", methods=["GET", "POST"])
 def home():
     # store the two lists in session so the other routes can access them
     session["all_items"], session["shopping_items"] = get_db()
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
+
 @app.route("/add_items", methods=["POST"])
 def add_items():
     session["shopping_items"].append(request.form["select_items"])
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
+
 @app.route("/remove_items", methods=["POST"])
 def remove_items():
+
+    # get the items that where checked in the checkboxes
     checked_boxes = request.form.getlist("check")
-    # Iterate over the the items which where checked in the checkboxes
+
+    # Iterate over the the list of items which where checked in the checkboxes, find the right listindex and pop from list and update the session
     for item in checked_boxes:  
         if item in session["shopping_items"]:
-            print("item:", item)
             idx = session["shopping_items"].index(item)
-            print("idx:", session["shopping_items"])
             session["shopping_items"].pop(idx)
             session.modified = True
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
+@app.route("/groups")
+def quote():
+    return render_template("groups.html")
 
+
+# Login route
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
@@ -75,7 +80,8 @@ def login():
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
+        email = request.form.get("email")
+        print("email:", type(email))
         # Ensure username was submitted
         if not request.form.get("email"):
             return apology("must provide email", 403)
@@ -85,17 +91,19 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE email=:a", {"a": "q1"}) # returns a cursor
+        #rows = db.execute("SELECT * FROM users WHERE email=:a", {"a": "q1"}) # returns a cursor
+        rows = db.execute("SELECT * FROM users WHERE email = ?", (email,))
+        print("rows", rows)
+        
         username_search = db.fetchall() # is a list of tuples e.g. [(3, 'q1', 'q1', 'pbkdf2:sha')]
         #Accessing the 4 columns of the above list
         user_id_search = [x[0] for x in username_search][0]
         username_search_item = [x[1] for x in username_search][0]
         user_email_search = [x[2] for x in username_search][0]
         hash_search = [x[3] for x in username_search][0] 
-        print("user_id_search:", user_id_search)
 
         # Ensure username exists and password is correct
-        if len(username_search) != 1 or check_password_hash(hash_search, request.form.get("password")):
+        if len(username_search) != 1 or not check_password_hash(hash_search, request.form.get("password")):
                 print("check_password_hash:", check_password_hash(hash_search, request.form.get("password")))
                 return apology("invalid username and/or password", 403)
         
@@ -114,29 +122,7 @@ def login():
     else:
         return render_template("login.html")
 
-@app.route("/user", methods=["GET", "POST"])
-def user():
-    if "user" in session:
-        user = session["user"]
-        print(user)
-
-        if request.method == "POST":
-            print("post")
-            email = request.form["email"]
-            session['email'] = email
-            found_user = users.query.filter_by(name=user).first()
-            found_user.email = email
-            db.session.commit()
-            flash("Email was saved!")
-        else:
-            if "email" in session:
-                email = session["email"]
-        return render_template("user.html", email=email)
-    else:
-        flash("You are not logged in!")
-        return redirect(url_for("login"))
-
-
+# Logout Route
 @app.route("/logout")
 def logout():
     """Log user out"""
@@ -148,10 +134,7 @@ def logout():
     flash('logged out')
     return redirect(url_for("login"))
 
-@app.route("/quote")
-def quote():
-    return render_template("quote.html")
-
+# Register Route
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
@@ -200,7 +183,8 @@ def register():
 def success():
     return render_template("login.html")
 
-
+# Code maybe needed later, otherwise delete (14.12.22)
+'''
 @app.route("/view", methods=["GET", "POST"])
 def view():
     user = session["user"]
@@ -213,6 +197,28 @@ def view():
         print("view:", values)
         return render_template("view.html", values=values)
 
+@app.route("/user", methods=["GET", "POST"])
+def user():
+    if "user" in session:
+        user = session["user"]
+        print(user)
+
+        if request.method == "POST":
+            print("post")
+            email = request.form["email"]
+            session['email'] = email
+            found_user = user.query.filter_by(name=user).first()
+            found_user.email = email
+            db.session.commit()
+            flash("Email was saved!")
+        else:
+            if "email" in session:
+                email = session["email"]
+        return render_template("user.html", email=email)
+    else:
+        flash("You are not logged in!")
+        return redirect(url_for("login"))
+'''
 
 if __name__ == "__main__":
     app.run(debug=True)
