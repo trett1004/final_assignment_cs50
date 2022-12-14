@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
-{% block title %}Home Page{% endblock%}
+{% block title %}List{% endblock%}
 {% block main %}
+    <!-- Message flashing-->
     {% with messages = get_flashed_messages() %}
     {% if messages %}
         {% for msg in messages %}
@@ -8,5 +9,27 @@
         {% endfor %}
     {% endif%}
     {% endwith %}
-<h1>Test</h1>
+    <h1>List</h1>
+
+    <!-- Remove Items Form -->
+    <div id="remove_items">
+        <form action="/remove_items" method="POST">
+            {% for item in shopping_items %}
+                <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}">
+                <label for="{{ items }}" name="{{ item }}">{{ item }}</label><br>
+            {% endfor %}
+            <input type="submit" value="REMOVE">
+        </form>
+    </div>
+
+    <!-- Add Items Form -->
+    <div id="add_item">
+        <form action="/add_items" method="POST">
+            <select name="select_items">
+            {% for item in all_items %}
+                <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+            <input type="submit" value="ADD">
+        </form>
+    </div>
 {% endblock %}

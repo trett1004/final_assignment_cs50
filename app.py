@@ -1,73 +1,117 @@
+import os
+import random
+
 from flask import Flask, redirect, url_for, render_template, request, session, flash
-from datetime import timedelta
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
+from datetime import timedelta, date, datetime
+import sqlite3
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask_session import Session
 
-engine = create_engine("sqlite://", echo=True, future=True)
+#from cs50 import SQL
 
-# create the extension
-db = SQLAlchemy()
+from helpers import apology, login_required
+
 # create the app
 app = Flask(__name__)
-# configure the SQLite database, relative to the app instance folder
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
-# initialize the app with the extension
-db.init_app(app)
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+
+# Ensure templates are auto-reloaded
+#app.config["TEMPLATES_AUTO_RELOAD"] = True
+
 app.secret_key = "KoyKoyKoy"
-app.permanent_session_lifetime = timedelta(days=365)
 
-class users(db.Model):
-    _id = db.Column("id" ,db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(100))
 
-    def __init__(self, name, email):
-        self.name = name
-        self.email = email
+# Establish connection to database
+con = sqlite3.connect("koy.db", check_same_thread=False)
+db = con.cursor()
 
-@app.route("/")
+# Create a function that returns all grocery entries from database
+def get_db():
+    db.execute("select name from groceries")
+    all_data = db.fetchall()
+    all_data = [str(val[0]) for val in all_data]
+
+    # make a second list that is restricted to the first db entry
+    shopping_list = all_data.copy() 
+    shopping_list = shopping_list[0:1]
+
+    return all_data, shopping_list
+
+# In the index route it is possible to add and remove items. The further routes "/add_items" and "/remove_items" return index.html
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return render_template("index.html")
+    # store the two lists in session so the other routes can access them
+    session["all_items"], session["shopping_items"] = get_db()
+    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
-@app.route("/view", methods=["GET", "POST"])
-def view():
-    user = session["user"]
-    print("user:", user)
-    values=users.query.all()
-    print("values:", values)
-    found_user = users.query.filter_by(name=user)
-    print("found_user:", found_user)
-    if request.method == "POST":
-        for user in found_user:
-            user.delete()
+@app.route("/add_items", methods=["POST"])
+def add_items():
+    session["shopping_items"].append(request.form["select_items"])
+    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
-    else:
-        print("view:", values)
-        return render_template("view.html", values=values)
-    
+@app.route("/remove_items", methods=["POST"])
+def remove_items():
+    checked_boxes = request.form.getlist("check")
+    # Iterate over the the items which where checked in the checkboxes
+    for item in checked_boxes:  
+        if item in session["shopping_items"]:
+            print("item:", item)
+            idx = session["shopping_items"].index(item)
+            print("idx:", session["shopping_items"])
+            session["shopping_items"].pop(idx)
+            session.modified = True
+    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        session.permanent = True
-        user = request.form["name"]
-        session["user"] = user
+    """Log user in"""
 
-        found_user = users.query.filter_by(name=user).first()
-        if found_user:
-            session["email"] = found_user.email
-        else:
-            usr = users(user, "")
-            db.session.add(usr)
-            db.session.commit()
-        flash("Login Successful!")
-        return redirect(url_for("user"))
+    # Forget any user_id
+    session.clear()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Ensure username was submitted
+        if not request.form.get("email"):
+            return apology("must provide email", 403)
+
+        # Ensure password was submitted
+        elif not request.form.get("password"):
+            return apology("must provide password", 403)
+
+        # Query database for username
+        rows = db.execute("SELECT * FROM users WHERE email=:a", {"a": "q1"}) # returns a cursor
+        username_search = db.fetchall() # is a list of tuples e.g. [(3, 'q1', 'q1', 'pbkdf2:sha')]
+        #Accessing the 4 columns of the above list
+        user_id_search = [x[0] for x in username_search][0]
+        username_search_item = [x[1] for x in username_search][0]
+        user_email_search = [x[2] for x in username_search][0]
+        hash_search = [x[3] for x in username_search][0] 
+        print("user_id_search:", user_id_search)
+
+        # Ensure username exists and password is correct
+        if len(username_search) != 1 or check_password_hash(hash_search, request.form.get("password")):
+                print("check_password_hash:", check_password_hash(hash_search, request.form.get("password")))
+                return apology("invalid username and/or password", 403)
+        
+        # Remember which user has logged in
+        session["user_id"] = user_id_search
+
+        # Remember username
+        session["username"] = username_search_item
+        username = session["username"]
+        
+        # Redirect user to home page
+        flash(f"Hello {username} :)")
+        return redirect("/")
+
+    # User reached route via GET (as by clicking a link or via redirect)
     else:
-        if "user" in session:
-            flash("You are already logged in!")
-            return render_template(url_for("user"))
         return render_template("login.html")
 
 @app.route("/user", methods=["GET", "POST"])
@@ -95,24 +139,84 @@ def user():
 
 @app.route("/logout")
 def logout():
-    flash('You have been logged out')
-    session.pop("user", None)
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    flash('logged out')
     return redirect(url_for("login"))
 
 @app.route("/quote")
 def quote():
     return render_template("quote.html")
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Register user"""
+    # if request method is post:
+    if request.method == "POST":
+
+        # Ensure username was submitted
+        if not request.form.get("username"):
+            return apology("must provide username", 400)
+
+        # Ensure email was submitted
+        if not request.form.get("email"):
+            return apology("must provide email", 400)
+
+        # Ensure password was submitted
+        elif not request.form.get("password"):
+            return apology("must provide password", 400)
+
+        # Ensure password confirmation was submitted
+        elif not request.form.get("confirmation"):
+            return apology("must provide password confirmation")
+
+        # Ensure that Confirmed Password matches with Password
+        elif request.form.get("confirmation") != request.form.get("password"):
+            return apology("Confirmed Password does not match Password")
+
+        # If all fields are filled out correctly...
+        # Generate hash for password
+        pw_hash = generate_password_hash(request.form.get("password"))
+        # Add the users entry in database and add 10000 $ cash to the user
+        try:
+            db.execute("INSERT INTO users VALUES (null, ?,?,?)", (request.form.get("username"), request.form.get("email"), pw_hash))
+            con.commit()
+            con.close()
+            flash('Sccessfully registered')
+            return redirect("success")
+        # If entry is not possible, because username is already in database return an apology
+
+        except:
+            return apology("Username already taken")
+    # else user reached route via method "GET", then return register page
+    else:
+        return render_template("register.html")
+
+@app.route("/success")
+def success():
+    return render_template("login.html")
+
+
+@app.route("/view", methods=["GET", "POST"])
+def view():
+    user = session["user"]
+    print("user:", user)
+    if request.method == "POST":
+        for user in found_user:
+            user.delete()
+
+    else:
+        print("view:", values)
+        return render_template("view.html", values=values)
+
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
 
-
-
-'''
-
-'''
 
 
 
