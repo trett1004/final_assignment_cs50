@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block title %}Groups{% endblock%}
+{% block main %}
+
+<!-- Get flashed messages -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    {% for msg in messages %}
+        <p>{{msg}}</p>
+    {% endfor %}
+{% endif%}
+{% endwith %}
+
+<!-- Show all Groups the user is part of -->
+<h3>Your Groups</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Group</th>
+            <th>Members</th>
+        </tr>
+    </thead>
+     <!-- List the members of a group: Loop through the lists of members of each group entries to display them in this table-->
+    <tbody>
+        {% for i in range(groups|count) %}
+            <tr>
+                <td>{{groups[i]}}</td>
+                <td>{{ list_group_name_list[i] }}</td>
+                <td>
+                    <form action="/enter_group" method="POST">
+                        <input class="btn_enter_group" type="submit" value="GO TO Group">
+                        <input type="hidden" name="enter_group" value="{{ groups[i] }}">
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br><br><br>
+
+<!-- Make a new group -->
+<div id="groups">
+    <form action="/groups" method="POST">
+        <label for="create_group">Create a new group:</label><br>
+        <input autofocus required="required" autocomplete="off" type="text" name="create_group" placeholder="Groupname">
+        <input type="submit" value="CREATE">
+    </form>
+</div>
+<br>
+
+<!-- Add user to group -->
+<div id="add_user">
+    <form action="/add_user" method="POST">
+        <label for="add_user">Add someone:</label><br>
+        <label for="select_group">Select group</label>
+        <select name="select_groups">
+            {% for item in groups %}
+                <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+        <label for="add_user">Add user:</label>
+        <input autofocus required="required" autocomplete="off" type="text" name="add_user" placeholder="User">
+        <input type="submit" value="ADD">
+    </form>
+</div>
+<br>
+
+<!-- Remove yourself from a group -->
+<div id="remove_yourself">
+    <form action="/remove_yourself" method="POST">
+        <label for="remove_yourself">Remove yourself from a group:</label><br>
+        <label for="select_group">Select group</label>
+        <select name="select_removal_group">
+            {% for item in groups %}
+                <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+        <input type="submit" value="REMOVE Yourself">
+    </form>
+</div>
+
+{% endblock %}

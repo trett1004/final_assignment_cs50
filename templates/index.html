@@ -1,6 +1,10 @@
+
+
 {% extends "layout.html" %}
 {% block title %}List{% endblock%}
 {% block main %}
+
+
     <!-- Message flashing-->
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -26,10 +30,13 @@
     <div id="add_item">
         <form action="/add_items" method="POST">
             <select name="select_items">
-            {% for item in all_items %}
-                <option value="{{ item }}">{{ item }}</option>
-            {% endfor %}
+                {% for item in all_items %}
+                    <option value="{{ item }}">{{ item }}</option>
+                {% endfor %}
             <input type="submit" value="ADD">
         </form>
     </div>
+    <form autocomplete="off"><input type="text" name="q" id="q" onKeyUp="showResults(this.value)" />
+        <div id="result"></div>
+    </form>
 {% endblock %}

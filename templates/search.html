@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block title %}List{% endblock%}
+{% block main %}
+
+
+<!-- Message flashing-->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    {% for msg in messages %}
+        <p>{{msg}}</p>
+    {% endfor %}
+{% endif%}
+{% endwith %}
+<h1>Test List</h1>
+
+<!--form action="/search_items" method="GET"></form-->
+    <input autocomplete="off" autofocus placeholder="Query" name="q" type="search">
+    <!-- V1 | input type="submit" value="search"-->
+
+
+    <ul></ul>
+
+    <script>
+        let input = document.querySelector('input');
+        input.addEventListener('input', async function() {
+            console.info("iran 1");
+            let response = await fetch ('/?q=' + input.value);
+            let data = await response.text();
+            document.querySelector('ul').innerHTML = data;
+            console.info("iran 2");
+        })
+    </script>
+
+
+<!-- V1 |
+<br>
+    <ul>
+        {% for item in range(data|count) %}
+            <li>{{ data[item]}}</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+-->
+<!--
+<form autocomplete="off"><input type="text" name="q" id="q" onKeyUp="showResults(this.value)" />
+    <div id="result"></div>
+</form>
+-->
