@@ -118,7 +118,8 @@ def remove_items():
 @app.route("/search", methods=["GET"])
 def search_items():
 # Search the entries (items) that are stored for the group in the database
-    search = request.args.get("q")
+    #search = request.args.get("q") 
+    search = request.args.get("q", "")   
     #db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
     print("route search_items q:", search)
     print("route search_items session enter_group:", session["enter_group"])

@@ -1,0 +1,91 @@
+.container-fluid {
+    text-align: center;
+    font-family: "Verdana";
+}
+
+.workingarea {
+    background-color: #E5E5E5;
+    color: #302b29;
+    padding: 30px;
+}
+
+#remove_items {
+    
+}
+
+#add-items {
+
+}
+
+#btn_remove {
+    background-color: lightgray;
+    color: black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 2px solid white;
+    margin: 10px;
+    padding: 10px 15px;
+}
+
+#btn_remove:Hover {
+    background-color: lightslategray;
+}
+
+#btn_add {
+    background-color: #01a88a;
+    color: white;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 2px solid white;
+    margin: 10px;
+    padding: 10px 15px;
+}
+
+#btn_add:hover {
+    background-color: lightslategray;
+}
+
+select{
+    font-family: Verdana;
+    font-size: 0.85em;
+    width: 200px;
+    margin: 50px 10px;
+    padding: 5px 0px;
+    border: 2px solid darkgray;
+}
+
+
+
+/* Size for brand */
+nav .navbar-brand
+{
+    font-size: xx-large;
+}
+
+/* Colors for brand */
+nav .navbar-brand .blue
+{
+    color: #537fbe;
+}
+nav .navbar-brand .red
+{
+    color: #ea433b;
+}
+nav .navbar-brand .yellow
+{
+    color: #f5b82e;
+}
+nav .navbar-brand .green
+{
+    color: #2e944b;
+}
+
+.table
+    {
+        padding-right: 150px;
+        padding-left: 150px;
+    }
+
+
+
+
