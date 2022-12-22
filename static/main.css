@@ -4,17 +4,13 @@
 }
 
 .workingarea {
-    background-color: #E5E5E5;
-    color: #302b29;
-    padding: 30px;
+
 }
 
 #remove_items {
-    
-}
-
-#add-items {
-
+    background-color: #E5E5E5;
+    color: #302b29;
+    padding: 30px;
 }
 
 #btn_remove {
@@ -80,10 +76,9 @@ nav .navbar-brand .green
     color: #2e944b;
 }
 
-.table
-    {
-        padding-right: 150px;
-        padding-left: 150px;
+.table{
+    margin-left: auto;
+    margin-right: auto;
     }
 
 
