@@ -91,7 +91,7 @@ def home():
     else:
         try:
             session["all_items"], session["shopping_items"] = get_db()
-            return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
+            return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group=session["list_group_name_list"])
         except:
             return render_template("index.html")
 
@@ -121,8 +121,10 @@ def search_items():
     #search = request.args.get("q") 
 
     if request.method == "POST":
-        print("hello")
-        print("request", request.data)
+        print("hello1")
+        print("request1", request.data)
+        print("request2", request.args)
+        print("hello2")
         return render_template("search.html")
     else:
         search = request.args.get("q", "")   
@@ -143,7 +145,6 @@ def groups():
     session["groups"] = get_groups()
     if request.method == "POST":
         
-        # group_name_list = []
         new_group = request.form.get("create_group")
         db.execute("INSERT INTO groups(group_name) VALUES (?)", (new_group,))
         #print("@goups post new_group:", new_group)
@@ -162,6 +163,8 @@ def groups():
         print("@goups post session groups:", session["groups"])
         print("@goups post session list_group_name_list:", session["list_group_name_list"])
         flash(f"Group *{new_group}* created:)")
+
+        print("groupnamelist", session["list_group_name_list"])
 
         return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 
@@ -183,6 +186,7 @@ def groups():
                 list_group_name_list.append(group_name_list)   
                 session["list_group_name_list"] = list_group_name_list
                 group_name_list = []
+                print("@goups post session list_group_name_list:", session["list_group_name_list"])
             return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 
 @app.route("/add_user", methods=["GET", "POST"])

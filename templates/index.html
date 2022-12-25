@@ -24,7 +24,7 @@
                         <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
                         <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
                         <select name="select_items" change="select_item()">
-                            {% for item in all_items %}
+                            {% for item in group %}
                                 <option value="{{ item }}" selected="selected('{{ item }}')">{{ item }}</option>
                             {% endfor %}
                         </select>
