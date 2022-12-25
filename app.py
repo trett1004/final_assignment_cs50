@@ -115,19 +115,25 @@ def remove_items():
             session.modified = True
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
 
-@app.route("/search", methods=["GET"])
+@app.route("/search", methods=["GET", "POST"])
 def search_items():
     # Search the entries (items) that are stored for the group in the database
     #search = request.args.get("q") 
-    search = request.args.get("q", "")   
-    db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
-    print("route search_items q:", search)
-    print("route search_items session enter_group:", session["enter_group"])
-    data = db.fetchall()
-    data = [str(val[0]) for val in data]
-    print("route search_items data:", data)
 
-    return render_template("search.html", data=data)
+    if request.method == "POST":
+        print("hello")
+        print("request", request.data)
+        return render_template("search.html")
+    else:
+        search = request.args.get("q", "")   
+        db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
+        print("route search_items q:", search)
+        print("route search_items session enter_group:", session["enter_group"])
+        data = db.fetchall()
+        data = [str(val[0]) for val in data]
+        print("route search_items data:", data)
+
+        return render_template("search.html", data=data)
 
 # Shows the current groups of the user and has a "create new group" function
 @app.route("/groups", methods=["GET", "POST"])

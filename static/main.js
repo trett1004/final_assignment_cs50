@@ -15,3 +15,13 @@ function check_me(input_id) {
     btn.style.backgroundColor = "#FE7575";
 
 }
+
+function selected(item) {
+    return item == "Lavazza"
+}
+
+function select_item(item) {
+    
+    console.info(item)
+    console.info("i ran 1")
+}

@@ -20,12 +20,15 @@
         <div id="remove_items">
             <form action="/remove_items" method="POST">
                 {% for item in shopping_items %}
-                    <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
-                    <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
-                    <select name="select_items">
-                    {% for item in all_items %}
-                        <option value="{{ item }}">{{ item }}</option>
-                    {% endfor %}
+                    <div class="katerina">
+                        <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
+                        <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
+                        <select name="select_items" change="select_item()">
+                            {% for item in all_items %}
+                                <option value="{{ item }}" selected="selected('{{ item }}')">{{ item }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 {% endfor %}
                 <input type="submit" value="CHECK ITEMS" id="btn_remove">
             </form>
