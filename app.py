@@ -119,23 +119,23 @@ def remove_items():
 def search_items():
     # Search the entries (items) that are stored for the group in the database
     #search = request.args.get("q") 
-
     if request.method == "POST":
         print("hello1")
-        print("request1", request.data)
-        print("request2", request.args)
-        print("hello2")
-        return render_template("search.html")
-    else:
-        search = request.args.get("q", "")   
-        db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
-        print("route search_items q:", search)
-        print("route search_items session enter_group:", session["enter_group"])
-        data = db.fetchall()
-        data = [str(val[0]) for val in data]
-        print("route search_items data:", data)
+        print("request1", request.get_json(force=True))
+        value = request.get_json(force=True).get("data", "")
+        print("value", value)
+        #search = request.args.get("q", "")   
+    print("entergroup", session["enter_group"])
+    db.execute("select name from groceries WHERE group_id = ?", (session["enter_group"], ))
+    #db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
+    #print("route search_items q:", search)
+    print("route search_items session enter_group:", session["enter_group"])
+    data = db.fetchall()
+    data = [str(val[0]) for val in data]
+    print("route search_items data:", data)
 
-        return render_template("search.html", data=data)
+    return render_template("search.html", data=data)
+
 
 # Shows the current groups of the user and has a "create new group" function
 @app.route("/groups", methods=["GET", "POST"])
