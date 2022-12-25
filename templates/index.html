@@ -4,7 +4,6 @@
 {% block title %}List{% endblock%}
 {% block main %}
 
-
     <!-- Message flashing-->
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -22,7 +21,11 @@
             <form action="/remove_items" method="POST">
                 {% for item in shopping_items %}
                     <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
-                    <label for="{{ items }}" name="{{ item }}">{{ item }}</label><br>
+                    <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
+                    <select name="select_items">
+                    {% for item in all_items %}
+                        <option value="{{ item }}">{{ item }}</option>
+                    {% endfor %}
                 {% endfor %}
                 <input type="submit" value="CHECK ITEMS" id="btn_remove">
             </form>

@@ -19,16 +19,23 @@
     <!-- V1 | input type="submit" value="search"-->
 
 
-    <ul></ul>
+    <ul id="my_list"></ul>
+
 
     <script>
         let input = document.querySelector('input');
-        input.addEventListener('input', async function() {
-            console.info("iran 1");
-            let response = await fetch ('/?q=' + input.value);
-            let data = await response.text();
-            document.querySelector('ul').innerHTML = data;
-            console.info("iran 2");
+        input.addEventListener('input', event => {
+            const current_search = event.target.value;
+            let ul = document.querySelector("#my_list");
+            ul.innerHTML = "";
+            console.log(ul);
+            var items=[];
+            const list_data_filtered = list_data.filter(item => item.toLowerCase().includes(current_search.toLowerCase()));
+            list_data_filtered.forEach(element => {
+                var li = document.createElement('li');
+                ul.appendChild(li);
+                li.innerHTML = element;
+            });
         })
     </script>
 
