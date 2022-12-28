@@ -14,6 +14,6 @@ Aside from that there is a "group"-page where the user can manage his/her groups
 Further aside from that there is a register and login function.
 
 **Used Languages:**
-Backend: Flask and sqlite
-Frontend: HTML, CSS, JS
+Backend: Python with framework Flask, sqlite3
+Frontend: HTML, CSS, JS with library JQuery
 

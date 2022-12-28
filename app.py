@@ -28,34 +28,35 @@ db = con.cursor()
 # To check the taken route
 
 
-# Create a function that returns all grocery-entries from database
+# Create a function that returns all grocery-entries from database of a certain group
 def get_db():
     db.execute("select name from groceries WHERE group_id = ?", (session["enter_group"],))
+    print("@get_db session enter_group", session["enter_group"])
     all_data = db.fetchall()
+    print("alldata", all_data)
     all_data = [str(val[0]) for val in all_data]
     # make a copy of the list which contains only the first database entry
     shopping_list = all_data.copy() 
+    print("@get_db shopping_list:", shopping_list)
     return all_data, shopping_list
 
-# Make the function like above only with autocomplete
-def autocomplete():
-    db.execute("select name from groceries WHERE group_id = ? and name LIKE ?", (session["enter_group"], request.args.get("q"),))
-    print("autocomp session enter_group:", session["enter_group"])
-    data = db.fetchall()
-    data = [str(val[0]) for val in data]
-    print("data:", data)
-    # make a copy of the list which contains only the first database entry
+def get_shopping_list():
+    db.execute("select name from shopping_list WHERE group_id = ?", (session["enter_group"],))
+    list_data = db.fetchall()
+    print("listdata", list_data)
+    list_data = [str(val[0]) for val in list_data]
+    return list_data
 
-    return data
-
-
-# Create a function that returns all group-entries from database
+# Create a function that returns all groups from database of the current logged in user 
 def get_groups():
     db.execute("select group_name from groupmembers WHERE user_id = ?", (session["user_id"],))
     all_groups = db.fetchall()
     all_groups = [str(val[0]) for val in all_groups]
     return all_groups
     
+# Create a function that returns a list of all members of all groups
+# It is used in index.html to display the members of euch group
+# It returns a list of lists e.g. [['Max', 'Moritz', 'max', 'moe', 'moe'], ['max', 'moe']]
 def group_members():
     group_name_list = []
     list_group_name_list = []
@@ -73,32 +74,49 @@ def group_members():
         list_group_name_list.append(group_name_list)  
         #print("@ groupmembers list_group_name_list:", list_group_name_list) 
         session["list_group_name_list"] = list_group_name_list
-        #print("@ groupmembers session list_group_name_list:", session["list_group_name_list"]) 
+        print("@ groupmembers session groups", session["groups"])
+        print("@ groupmembers session list_group_name_list:", session["list_group_name_list"]) 
         group_name_list = []
         #print("@ groupmembers session groups:", session["groups"])
     return session["list_group_name_list"]
 
-
-
-
 # In the index route it is possible to add and remove items. The further routes (see routes below) "/add_items" and "/remove_items" return index.html
 @app.route("/", methods=["GET", "POST"])
 def home():
-    rule = request.url_rule
     # store the two lists in session so the other routes can access them
-    if '/login' in rule.rule:
+    try:
+        session["all_items"], session["shopping_items"] = get_db()
+        session["list_data"] = get_shopping_list()
+        print("hello")
+        print("@/ session shopping items", session["shopping_items"])
+        #Get the groupmembers for displaying them in the dropdown bisides each item
+        print("groupmembers", session["list_group_name_list"])
+        return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group=session["list_group_name_list"], group_member_names=session["group_member_names"], list_data=session["list_data"], data_p=session["data"])
+    except:
+        print("@/ exept login")
         return render_template("index.html")
-    else:
-        try:
-            session["all_items"], session["shopping_items"] = get_db()
-            return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group=session["list_group_name_list"])
-        except:
-            return render_template("index.html")
+
+@app.route("/add_new_item", methods=["POST"])
+def add_new_item():
+    if request.method == "POST":
+        new_item = request.form.get("new_item")
+        db.execute("INSERT INTO shopping_list (name, group_id) VALUES (?, ?)", (new_item, session["enter_group"],))
+        db.execute("INSERT INTO groceries (name, group_id) VALUES (?, ?)", (new_item, session["enter_group"],))
+        con.commit()
+        session["list_data"].append(new_item)
+        print("@add_new_item session list data:",  session["list_data"])
+        return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 @app.route("/add_items", methods=["POST"])
 def add_items():
-    session["shopping_items"].append(request.form["select_items"])
-    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
+    session["list_data"].append(request.form["select_items"])
+    print("@additems rf select items", request.form["select_items"])
+    print(" @additems session groups", session["enter_group"])
+    db.execute("INSERT INTO shopping_list(name, group_id) VALUES (?,?)", (request.form["select_items"], session["enter_group"]))
+    con.commit()
+    #request.form["select_items"]
+    print("@ add items session list_data>", session["list_data"])
+    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 
 @app.route("/remove_items", methods=["POST"])
@@ -109,19 +127,21 @@ def remove_items():
 
     # Iterate over the the list of items which where checked in the checkboxes, find the right listindex and pop from list and update the session
     for item in checked_boxes:  
-        if item in session["shopping_items"]:
-            idx = session["shopping_items"].index(item)
-            session["shopping_items"].pop(idx)
+        if item in session["list_data"]:
+            idx = session["list_data"].index(item)
+            session["list_data"].pop(idx)
+            print("@ /removeitems item", item)
             session.modified = True
-    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
+            db.execute("DELETE FROM shopping_list WHERE name = ? and group_id = ?", (item, session["enter_group"]))
+            print("/remove session list_data:", session["list_data"])
+    return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 @app.route("/search", methods=["GET", "POST"])
 def search_items():
     # Search the entries (items) that are stored for the group in the database
     #search = request.args.get("q") 
     if request.method == "POST":
-        print("hello1")
-        print("request1", request.get_json(force=True))
+        print("@search request1", request.get_json(force=True))
         value = request.get_json(force=True).get("data", "")
         print("value", value)
         #search = request.args.get("q", "")   
@@ -129,10 +149,11 @@ def search_items():
     db.execute("select name from groceries WHERE group_id = ?", (session["enter_group"], ))
     #db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
     #print("route search_items q:", search)
-    print("route search_items session enter_group:", session["enter_group"])
+    print("@ search session enter_group:", session["enter_group"])
     data = db.fetchall()
     data = [str(val[0]) for val in data]
-    print("route search_items data:", data)
+    print("@ search data:", data)
+    session["data"] = data
 
     return render_template("search.html", data=data)
 
@@ -146,6 +167,7 @@ def groups():
     if request.method == "POST":
         
         new_group = request.form.get("create_group")
+        print("@groups new_group", new_group)
         db.execute("INSERT INTO groups(group_name) VALUES (?)", (new_group,))
         #print("@goups post new_group:", new_group)
         # Get the all data to make db entry in table "groupmembers"
@@ -186,6 +208,7 @@ def groups():
                 list_group_name_list.append(group_name_list)   
                 session["list_group_name_list"] = list_group_name_list
                 group_name_list = []
+                print("@goups post session groups:", session["groups"])
                 print("@goups post session list_group_name_list:", session["list_group_name_list"])
             return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 
@@ -240,14 +263,26 @@ def enter_group():
     # Enter a group and display only the groceries that have the corresponding group_id in table groceries
     if request.method == "POST":
         enter_group = request.form.get("enter_group")
+        print("enter_group", enter_group)
         db.execute("SELECT group_id FROM groups WHERE group_name = ?", (enter_group,))
         enter_group = db.fetchall()
         enter_group = [val[0] for val in enter_group][0]
         session["enter_group"] = enter_group
+        print("@ entergroup", session["enter_group"])
+        group_member_names = db.execute("SELECT username FROM groupmembers WHERE group_id = ?", (enter_group,))
+        group_member_names = db.fetchall() #output e.g. [['Max', 'Moritz', 'max', 'moe', 'moe']]
+        # Get from above fetchall and make a list like e.g. ['Max', 'Moritz', 'max', 'moe', 'moe']
+        group_member_names = [val[0] for val in group_member_names] 
+        session["group_member_names"] = group_member_names
+        print("@enter_group group_member_names", group_member_names)
 
         if enter_group:
             session["all_items"], session["shopping_items"] = get_db()
-            return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"])
+            print("@enter group session all_items", session["all_items"])
+            print("@enter group session shopping_items", session["shopping_items"])
+            session["list_data"] = get_shopping_list()
+            print("@enter group session list_data", session["list_data"])
+            return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
     else:
         return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 

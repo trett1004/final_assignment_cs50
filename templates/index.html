@@ -1,5 +1,4 @@
 
-
 {% extends "layout.html" %}
 {% block title %}List{% endblock%}
 {% block main %}
@@ -14,17 +13,16 @@
     {% endwith %}
     <h1>List</h1>
 
-
     <!-- Remove Items Form -->
     <div class="workingarea">
         <div id="remove_items">
             <form action="/remove_items" method="POST">
-                {% for item in shopping_items %}
+                {% for item in list_data %}
                     <div class="katerina">
                         <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
                         <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
-                        <select name="select_items" change="select_item()">
-                            {% for item in group %}
+                        <select name="select_items">
+                            {% for item in group_member_names %}
                                 <option value="{{ item }}" selected="selected('{{ item }}')">{{ item }}</option>
                             {% endfor %}
                         </select>
@@ -33,6 +31,7 @@
                 <input type="submit" value="CHECK ITEMS" id="btn_remove">
             </form>
         </div>
+        <!--change="select_item()"-->
     
     
 
@@ -46,8 +45,18 @@
                 <input type="submit" value="ADD" id="btn_add">
             </form>
         </div>
-        <form autocomplete="off"><input type="text" name="q" id="q" onKeyUp="showResults(this.value)" />
-            <div id="result"></div>
+    </div>
+
+
+    <br>
+    <br>
+    <h3>Did not find what you where looking for?</h3>
+    <div id="add_new_item">
+        <form action="add_new_item" method="POST">
+            <input type="text" name="new_item" placeholder="Type in a new Item">
+            <input type="submit" value="ADD" id="btn_add">
         </form>
     </div>
+
+
 {% endblock %}

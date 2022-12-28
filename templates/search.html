@@ -14,10 +14,16 @@
 -->
 <h1>Test List</h1>
 
-<!--form action="/search_items" method="GET"></form-->
-    <input autocomplete="off" autofocus placeholder="Query" type="search">
-    <!-- V1 | input type="submit" value="search"-->
 
+<input autocomplete="off" autofocus placeholder="Query" type="search">    
+<!-- 
+    <form autocomplete="off" type="search" action="/search">
+        <div class="autocomplete" style="width:300px;">
+            <input autocomplete="off" autofocus id="myInput" type="search"  placeholder="Query">
+        </div>
+        <input type="submit">
+    </form>
+-->
 
 
     <ul id="my_list"></ul>
@@ -56,10 +62,11 @@
         {% endfor %}
     </ul>
 
-{% endblock %}
+
 -->
 <!--
 <form autocomplete="off"><input type="text" name="q" id="q" onKeyUp="showResults(this.value)" />
     <div id="result"></div>
 </form>
 -->
+{% endblock %}

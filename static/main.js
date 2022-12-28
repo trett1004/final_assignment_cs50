@@ -13,15 +13,13 @@ function check_me(input_id) {
     btn.value = "REMOVE ITEMS";
     btn.style.color = "#FFFFFF";
     btn.style.backgroundColor = "#FE7575";
-
 }
 
 function selected(item) {
-    return item == "Lavazza"
+    return item == "Milch"
 }
 
 function select_item(item) {
-    
     console.info(item)
     console.info("i ran 1")
 }
