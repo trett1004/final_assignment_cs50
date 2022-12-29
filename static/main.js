@@ -12,7 +12,7 @@ function check_me(input_id) {
     var btn = document.getElementById("btn_remove");
     btn.value = "REMOVE ITEMS";
     btn.style.color = "#FFFFFF";
-    btn.style.backgroundColor = "#FE7575";
+    btn.style.backgroundColor = "#FF0000";
 }
 
 function selected(item) {

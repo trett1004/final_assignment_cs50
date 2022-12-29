@@ -31,19 +31,15 @@ db = con.cursor()
 # Create a function that returns all grocery-entries from database of a certain group
 def get_db():
     db.execute("select name from groceries WHERE group_id = ?", (session["enter_group"],))
-    print("@get_db session enter_group", session["enter_group"])
     all_data = db.fetchall()
-    print("alldata", all_data)
     all_data = [str(val[0]) for val in all_data]
     # make a copy of the list which contains only the first database entry
     shopping_list = all_data.copy() 
-    print("@get_db shopping_list:", shopping_list)
     return all_data, shopping_list
 
 def get_shopping_list():
     db.execute("select name from shopping_list WHERE group_id = ?", (session["enter_group"],))
     list_data = db.fetchall()
-    print("listdata", list_data)
     list_data = [str(val[0]) for val in list_data]
     return list_data
 
@@ -60,41 +56,30 @@ def get_groups():
 def group_members():
     group_name_list = []
     list_group_name_list = []
-    #print("@ groupmembers session groups:", session["groups"])
     for i in range(len(session["groups"])):
         db.execute("select username from groupmembers WHERE group_name = ?", (session["groups"][i],))
-        #print("@ groupmembers session groups[i]:", session["groups"][i])
         user_name = db.fetchall()
-        #print("@ groupmembers user_name:", user_name)
         for j in range(len(user_name)):
             user_name_item = [x[0] for x in user_name][j]
-            #print("@ groupmembers user_name_item:", user_name_item)
             group_name_list.append(user_name_item)
-            #print("@ groupmembers group_name_list:", group_name_list)
         list_group_name_list.append(group_name_list)  
-        #print("@ groupmembers list_group_name_list:", list_group_name_list) 
         session["list_group_name_list"] = list_group_name_list
-        print("@ groupmembers session groups", session["groups"])
-        print("@ groupmembers session list_group_name_list:", session["list_group_name_list"]) 
         group_name_list = []
-        #print("@ groupmembers session groups:", session["groups"])
     return session["list_group_name_list"]
 
 # In the index route it is possible to add and remove items. The further routes (see routes below) "/add_items" and "/remove_items" return index.html
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def home():
     # store the two lists in session so the other routes can access them
     try:
+        print("hello")
         session["all_items"], session["shopping_items"] = get_db()
         session["list_data"] = get_shopping_list()
-        print("hello")
-        print("@/ session shopping items", session["shopping_items"])
         #Get the groupmembers for displaying them in the dropdown bisides each item
-        print("groupmembers", session["list_group_name_list"])
-        return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group=session["list_group_name_list"], group_member_names=session["group_member_names"], list_data=session["list_data"], data_p=session["data"])
+        return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group=session["list_group_name_list"], group_member_names=session["group_member_names"], list_data=session["list_data"])
     except:
-        print("@/ exept login")
-        return render_template("index.html")
+        return redirect("/groups")
 
 @app.route("/add_new_item", methods=["POST"])
 def add_new_item():
@@ -104,18 +89,14 @@ def add_new_item():
         db.execute("INSERT INTO groceries (name, group_id) VALUES (?, ?)", (new_item, session["enter_group"],))
         con.commit()
         session["list_data"].append(new_item)
-        print("@add_new_item session list data:",  session["list_data"])
         return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 @app.route("/add_items", methods=["POST"])
 def add_items():
     session["list_data"].append(request.form["select_items"])
-    print("@additems rf select items", request.form["select_items"])
-    print(" @additems session groups", session["enter_group"])
     db.execute("INSERT INTO shopping_list(name, group_id) VALUES (?,?)", (request.form["select_items"], session["enter_group"]))
     con.commit()
     #request.form["select_items"]
-    print("@ add items session list_data>", session["list_data"])
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 
@@ -130,10 +111,8 @@ def remove_items():
         if item in session["list_data"]:
             idx = session["list_data"].index(item)
             session["list_data"].pop(idx)
-            print("@ /removeitems item", item)
             session.modified = True
             db.execute("DELETE FROM shopping_list WHERE name = ? and group_id = ?", (item, session["enter_group"]))
-            print("/remove session list_data:", session["list_data"])
     return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
 
 @app.route("/search", methods=["GET", "POST"])
@@ -141,18 +120,12 @@ def search_items():
     # Search the entries (items) that are stored for the group in the database
     #search = request.args.get("q") 
     if request.method == "POST":
-        print("@search request1", request.get_json(force=True))
         value = request.get_json(force=True).get("data", "")
-        print("value", value)
         #search = request.args.get("q", "")   
-    print("entergroup", session["enter_group"])
     db.execute("select name from groceries WHERE group_id = ?", (session["enter_group"], ))
     #db.execute("select name from groceries WHERE group_id = ? AND name LIKE ?", (session["enter_group"], '%'+ search + '%'))
-    #print("route search_items q:", search)
-    print("@ search session enter_group:", session["enter_group"])
     data = db.fetchall()
     data = [str(val[0]) for val in data]
-    print("@ search data:", data)
     session["data"] = data
 
     return render_template("search.html", data=data)
@@ -160,6 +133,7 @@ def search_items():
 
 # Shows the current groups of the user and has a "create new group" function
 @app.route("/groups", methods=["GET", "POST"])
+@login_required
 def groups():
    
     #store the groupnames in a session
@@ -167,9 +141,7 @@ def groups():
     if request.method == "POST":
         
         new_group = request.form.get("create_group")
-        print("@groups new_group", new_group)
         db.execute("INSERT INTO groups(group_name) VALUES (?)", (new_group,))
-        #print("@goups post new_group:", new_group)
         # Get the all data to make db entry in table "groupmembers"
         # From table "groups" get the group_id
         new_group_id = db.execute("SELECT group_id FROM groups WHERE group_name = ?", (new_group,))
@@ -182,11 +154,7 @@ def groups():
         session["groups"] = get_groups() # Update the session
         
         session["list_group_name_list"] = group_members()
-        print("@goups post session groups:", session["groups"])
-        print("@goups post session list_group_name_list:", session["list_group_name_list"])
         flash(f"Group *{new_group}* created:)")
-
-        print("groupnamelist", session["list_group_name_list"])
 
         return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 
@@ -208,8 +176,6 @@ def groups():
                 list_group_name_list.append(group_name_list)   
                 session["list_group_name_list"] = list_group_name_list
                 group_name_list = []
-                print("@goups post session groups:", session["groups"])
-                print("@goups post session list_group_name_list:", session["list_group_name_list"])
             return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
 
 @app.route("/add_user", methods=["GET", "POST"])
@@ -219,14 +185,12 @@ def add_user():
     # Get all the needed variables for make insert in database    
         # Get the Groupname from form
         group_name = request.form.get("select_groups")
-        # print("@ add_user group_name:", group_name)
         #Get the corresponding group_id from selected group_name from table groups
         db.execute("SELECT group_id FROM groups WHERE group_name = ?", (group_name,))
         group_id = db.fetchall()
         group_id = [x[0] for x in group_id][0]
         # Get the user_id and user_name 
         user_name = request.form.get("add_user")
-        #print("@ add_user user_name:", user_name)
         # Get the corresponding user_id from database
         try:
             rows = db.execute("SELECT user_id FROM users WHERE username = ?", (user_name,))
@@ -263,25 +227,19 @@ def enter_group():
     # Enter a group and display only the groceries that have the corresponding group_id in table groceries
     if request.method == "POST":
         enter_group = request.form.get("enter_group")
-        print("enter_group", enter_group)
         db.execute("SELECT group_id FROM groups WHERE group_name = ?", (enter_group,))
         enter_group = db.fetchall()
         enter_group = [val[0] for val in enter_group][0]
         session["enter_group"] = enter_group
-        print("@ entergroup", session["enter_group"])
         group_member_names = db.execute("SELECT username FROM groupmembers WHERE group_id = ?", (enter_group,))
         group_member_names = db.fetchall() #output e.g. [['Max', 'Moritz', 'max', 'moe', 'moe']]
         # Get from above fetchall and make a list like e.g. ['Max', 'Moritz', 'max', 'moe', 'moe']
         group_member_names = [val[0] for val in group_member_names] 
         session["group_member_names"] = group_member_names
-        print("@enter_group group_member_names", group_member_names)
 
         if enter_group:
             session["all_items"], session["shopping_items"] = get_db()
-            print("@enter group session all_items", session["all_items"])
-            print("@enter group session shopping_items", session["shopping_items"])
             session["list_data"] = get_shopping_list()
-            print("@enter group session list_data", session["list_data"])
             return render_template("index.html", all_items=session["all_items"], shopping_items=session["shopping_items"], group_member_names=session["group_member_names"], list_data=session["list_data"])
     else:
         return render_template("groups.html", groups=session["groups"], list_group_name_list=session["list_group_name_list"])
@@ -327,7 +285,7 @@ def login():
         username = session["username"]
         
         # Redirect user to home page
-        flash(f"Hello {username} :)")
+        flash(f"Hello {username}, please select a group or make a new Group :)")
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -389,44 +347,6 @@ def register():
     # else user reached route via method "GET", then return register page
     else:
         return render_template("register.html")
-
-@app.route("/success")
-def success():
-    return render_template("login.html")
-
-# Code maybe needed later, otherwise delete (14.12.22)
-'''
-@app.route("/view", methods=["GET", "POST"])
-def view():
-    user = session["user"]
-    if request.method == "POST":
-        for user in found_user:
-            user.delete()
-
-    else:
-        return render_template("view.html", values=values)
-
-@app.route("/user", methods=["GET", "POST"])
-def user():
-    if "user" in session:
-        user = session["user"]
-
-        if request.method == "POST":
-            print("post")
-            email = request.form["email"]
-            session['email'] = email
-            found_user = user.query.filter_by(name=user).first()
-            found_user.email = email
-            db.session.commit()
-            flash("Email was saved!")
-        else:
-            if "email" in session:
-                email = session["email"]
-        return render_template("user.html", email=email)
-    else:
-        flash("You are not logged in!")
-        return redirect(url_for("login"))
-'''
 
 if __name__ == "__main__":
     app.run(debug=True)

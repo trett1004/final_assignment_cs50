@@ -11,7 +11,7 @@
         {% endfor %}
     {% endif%}
     {% endwith %}
-    <h1>List</h1>
+    <h1 class="h1">Shop List</h1>
 
     <!-- Remove Items Form -->
     <div class="workingarea">
@@ -21,18 +21,23 @@
                     <div class="katerina">
                         <input type="checkbox" name="check" id="{{ item }}" value="{{ item }}" onchange="check_me('{{ item }}')">
                         <label for="{{ items }}" name="{{ item }}">{{ item }}</label>
-                        <select name="select_items">
+                        <select name="select_items" onchange="select_item(this)">
                             {% for item in group_member_names %}
                                 <option value="{{ item }}" selected="selected('{{ item }}')">{{ item }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 {% endfor %}
-                <input type="submit" value="CHECK ITEMS" id="btn_remove">
+                <input type="submit" value="REMOVE ITEMS" id="btn_remove">
             </form>
         </div>
-        <!--change="select_item()"-->
-    
+
+        <!-- JS Code for changing the dropdown of the the name-->
+        <script>
+            function select_item(item) {
+                console.info(item.value)
+            }
+        </script>
     
 
         <!-- Add Items Form -->
@@ -53,7 +58,7 @@
     <h3>Did not find what you where looking for?</h3>
     <div id="add_new_item">
         <form action="add_new_item" method="POST">
-            <input type="text" name="new_item" placeholder="Type in a new Item">
+            <input class="inputfield" type="text" name="new_item" placeholder="Type in a new Item">
             <input type="submit" value="ADD" id="btn_add">
         </form>
     </div>
