@@ -1,7 +1,7 @@
-# Koy Koy Koy
+# Shared Shopping List - Final Exam of Harvard CS50
 #### Video Demo:  <URL HERE>
 #### Description:
-With the application it is possible to create a group with other (registered) users to share information about a purchasing status in that group. The name "Koy Koy Koy" is turkish and can be translated as "Put Put Put". It is derived from a (in Turkey) famous song from the singer Tancu Okan.
+With the application it is possible to create a group with other (registered) users to share information about a purchasing status in that group. 
 
 The intention is a shared buying list for e.g. a family event. One user puts an item (e.g. milk) in a list. All users being part of the group can see the item (e.g. the milk) and also the purchasestatus (crossed out or not crossed out).
 Furthermore submitted entries in that group are stored in a database for future easy access with an autocomplete function.
